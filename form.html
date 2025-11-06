@@ -11,13 +11,12 @@
       max-width: 600px;
       margin: 2rem auto;
       padding: 2rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                  0 2px 4px -1px rgba(0, 0, 0, 0.06);
       border-radius: 0.5rem;
       background-color: white;
     }
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
+    .form-group { margin-bottom: 1.5rem; }
     .form-label {
       display: block;
       margin-bottom: 0.5rem;
@@ -40,10 +39,7 @@
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
       background-color: white;
     }
-    .input-wrapper {
-      position: relative;
-      margin-bottom: 1.5rem;
-    }
+    .input-wrapper { position: relative; margin-bottom: 1.5rem; }
     .input-icon {
       position: absolute;
       left: 1rem;
@@ -72,9 +68,7 @@
       margin-bottom: 1rem;
       text-decoration: none;
     }
-    .back-link:hover {
-      text-decoration: underline;
-    }
+    .back-link:hover { text-decoration: underline; }
   </style>
 </head>
 <body class="bg-gray-50">
@@ -101,7 +95,9 @@
         </a>
         
         <h1 class="text-2xl font-bold text-gray-800 mb-6">Heart Health Assessment</h1>
-        <p class="text-gray-600 mb-6">Please provide the following information to assess your heart attack risk. All fields are required.</p>
+        <p class="text-gray-600 mb-6">
+          Please provide the following information to assess your heart attack risk. All fields are required.
+        </p>
         
         <form action="/predict" method="POST" class="space-y-6">
           <div class="form-group">
@@ -171,15 +167,33 @@
             </div>
           </div>
 
+          <!-- IoT Data Option -->
+          <div class="form-group">
+            <label class="inline-flex items-center">
+              <input type="checkbox" id="iotCheckbox" name="use_iot" class="h-5 w-5 text-indigo-600 border-gray-300 rounded">
+              <span class="ml-2 text-gray-700 font-medium">Use IoT Sensor Data (from ThingSpeak)</span>
+            </label>
+            <p class="text-sm text-gray-500 mt-1">Check this to automatically fetch Heart Rate and SpO₂ from IoT device.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Heart Rate (BPM)</label>
+            <div class="relative">
+              <input type="number" name="heartrate" id="heartrate" class="form-input pl-10" placeholder="e.g., 80" min="40" max="200" required>
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i class="fas fa-heart text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group">
             <label class="form-label">Blood Oxygen Level (SpO₂ %)</label>
             <div class="relative">
-              <input type="number" name="spo2" class="form-input pl-10" placeholder="e.g., 95" min="70" max="100" step="0.1" required>
+              <input type="number" name="spo2" id="spo2" class="form-input pl-10" placeholder="e.g., 95" min="70" max="100" step="0.1" required>
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <i class="fas fa-lungs text-gray-400"></i>
               </div>
             </div>
-            <p class="mt-1 text-sm text-gray-500">Normal range is typically 95-100%</p>
           </div>
 
           <div class="form-group">
@@ -211,5 +225,26 @@
       </div>
     </footer>
   </div>
+
+  <script>
+    document.getElementById("iotCheckbox").addEventListener("change", async function() {
+      if (this.checked) {
+        try {
+          const response = await fetch("https://api.thingspeak.com/channels/3102827/feeds.json?results=1");
+          const data = await response.json();
+          const latest = data.feeds[data.feeds.length - 1];
+          document.getElementById("heartrate").value = latest.field1;
+          document.getElementById("spo2").value = latest.field2;
+          alert("IoT data fetched successfully!");
+        } catch (error) {
+          alert("Failed to fetch IoT data.");
+          console.error(error);
+        }
+      } else {
+        document.getElementById("heartrate").value = "";
+        document.getElementById("spo2").value = "";
+      }
+    });
+  </script>
 </body>
 </html>
