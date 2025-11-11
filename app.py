@@ -23,6 +23,7 @@ except Exception as e:
 # ---------------- IoT Fetch Route ----------------
 @app.route('/fetch_iot_data')
 def fetch_iot_data():
+    """Used by prediction form to get latest IoT sensor data."""
     try:
         api_url = "https://api.thingspeak.com/channels/3102827/feeds.json?results=2"
         response = requests.get(api_url).json()
@@ -49,6 +50,35 @@ def fetch_iot_data():
         return jsonify({"status": "error"})
 
 
+# ---------------- New API: IoT Monitor Fetch ----------------
+@app.route('/api/iot-data')
+def api_iot_data():
+    """Used by monitor.html to fetch latest sensor readings."""
+    try:
+        api_url = "https://api.thingspeak.com/channels/3102827/feeds.json?results=1"
+        response = requests.get(api_url).json()
+        feeds = response.get("feeds", [])
+        if not feeds:
+            return jsonify({"connected": False})
+
+        last_entry = feeds[-1]
+        spo2 = last_entry.get("field2")
+        heart_rate = last_entry.get("field1")
+
+        if spo2 is None or heart_rate is None:
+            return jsonify({"connected": False})
+
+        return jsonify({
+            "connected": True,
+            "spo2": round(float(spo2), 1),
+            "heart_rate": round(float(heart_rate), 1)
+        })
+
+    except Exception as e:
+        print("❌ IoT Fetch Error:", e)
+        return jsonify({"connected": False})
+
+
 # ---------------- Routes ----------------
 @app.route('/')
 def home():
@@ -57,6 +87,11 @@ def home():
 @app.route('/form')
 def form():
     return render_template('form.html')
+
+@app.route('/monitor')
+def monitor():
+    """New health monitoring dashboard."""
+    return render_template('monitor.html')
 
 
 # ---------------- Prediction ----------------
