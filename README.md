@@ -1,65 +1,96 @@
-# 🫀 Heart Attack Risk Prediction (AI + IoT Integration)
+# HeartGuard - Heart Attack Risk Assessment
 
-## 🔍 Overview
-This project is a **machine learning–powered web application** that predicts the **risk of heart attack** based on several health parameters such as **age, gender, smoking habits, ECG results, SpO₂ levels, and blood pressure**.
+A web application that assesses the risk of heart attack using both user-provided health data and IoT sensor data.
 
-It is built using **Flask (Python)** as the backend and a **Random Forest Classifier** trained in **Google Colab** for accurate heart attack risk prediction.  
-The app can also be connected with **IoT devices** (ESP32/ESP8266 with sensors) to collect and analyze real-time health data.
+## Features
 
----
+- User-friendly web interface for health assessment
+- Real-time IoT sensor integration (heart rate and SpO2)
+- Risk assessment with confidence scoring
+- Responsive design for all devices
+- Secure data handling
 
-## 🚀 Features
-- 🧠 Predicts **High or Low Heart Attack Risk**
-- 📊 Shows **Probability of High Risk**
-- 💻 **Flask web app interface**
-- 🔌 **IoT Integration** for real-time sensor data
-- ⚙️ Modular and easily extendable
-- ☁️ Ready for cloud deployment
+## Prerequisites
 
----
+- Python 3.8+
+- pip (Python package manager)
+- Internet connection (for IoT sensor integration)
 
-## 🧱 Project Structure
+## Installation
 
-heart_attack_app/
-│
-├── app.py # Flask app (main backend)
-│
-├── models/ # Pretrained model & supporting files
-│ ├── heart_attack_model_rf.joblib
-│ ├── scaler_rf.joblib
-│ ├── label_encoders_rf.joblib
-│ ├── y_encoder_rf.joblib
-│ └── threshold_rf.joblib
-│
-├── templates/ # Frontend HTML templates
-│ ├── index.html # Input form
-│ └── result.html # Result page
-│
-├── static/ # Static assets
-│ ├── css/
-│ │ └── style.css # Custom styles
-│ └── js/
-│ └── script.js # (Optional) JS logic
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/heart-attack-app.git
+   cd heart-attack-app
+   ```
 
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+   ```
 
----
+3. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 🧠 Model Information
-- **Algorithm:** Random Forest Classifier  
-- **Environment:** Trained in Google Colab  
-- **Accuracy:** ~85%  
-- **Input Features:**
-  - Age  
-  - Gender  
-  - Smoking Status  
-  - Alcohol Consumption  
-  - ECG Results  
-  - Blood Oxygen Levels (SpO₂)  
-  - BP Systolic  
-  - BP Diastolic  
+## Configuration
 
-- **Output:**
-  - Risk Level → *High / Low*  
-  - Probability → *Model confidence (%)*
+1. Create a `.env` file in the project root with the following variables:
+   ```
+   FLASK_APP=app.py
+   FLASK_ENV=development
+   SECRET_KEY=your-secret-key-here
+   IOT_API_URL=https://api.thingspeak.com/channels/3102827/feeds.json?results=2
+   ```
 
----
+## Running the Application
+
+1. Start the development server:
+   ```bash
+   flask run
+   ```
+
+2. Open your browser and navigate to:
+   ```
+   http://127.0.0.1:5000/
+   ```
+
+## Project Structure
+
+```
+heart-attack-app/
+├── app.py                 # Main application file
+├── requirements.txt       # Project dependencies
+├── .env                  # Environment variables (not in version control)
+├── .gitignore            # Git ignore file
+├── README.md             # This file
+├── previous_iot_data.json # Stores the latest IoT sensor data
+├── static/               # Static files (CSS, JS, images)
+│   ├── css/
+│   └── js/
+└── templates/            # HTML templates
+    ├── form.html         # Assessment form
+    ├── home.html         # Landing page
+    ├── result.html       # Results page
+    └── error.html        # Error page
+```
+
+## IoT Integration
+
+The application can connect to an IoT device (like an Arduino or Raspberry Pi with sensors) through the ThingSpeak API. The following data is collected:
+
+- Heart Rate (BPM)
+- Blood Oxygen Level (SpO2%)
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- [Flask](https://flask.palletsprojects.com/) - The web framework used
+- [Bootstrap](https://getbootstrap.com/) - For responsive design
+- [Font Awesome](https://fontawesome.com/) - For icons
+- [ThingSpeak](https://thingspeak.com/) - For IoT data collection
