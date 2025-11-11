@@ -17,6 +17,8 @@
             --secondary: #6C63FF;
             --dark: #2D3748;
             --light: #F8FAFC;
+            --success: #28a745;
+            --danger: #dc3545;
         }
 
         body {
@@ -43,11 +45,12 @@
             border-radius: 1rem;
             box-shadow: 0 8px 20px rgba(0,0,0,0.05);
             padding: 2rem;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .monitor-card:hover {
             transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
         }
 
         .vital-value {
@@ -71,20 +74,46 @@
 
         .iot-status {
             font-weight: 600;
+            transition: color 0.5s ease;
         }
 
         .iot-disconnected {
-            color: #d9534f;
+            color: var(--danger);
         }
 
         .iot-connected {
-            color: #28a745;
+            color: var(--success);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: blink 1.2s infinite ease-in-out;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+
+        /* Glow around current values */
+        .vital-value.glow {
+            text-shadow: 0 0 8px rgba(74,144,226,0.3);
+        }
+
+        /* Countdown style */
+        #refreshTimer {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: -10px;
         }
     </style>
 </head>
 
 <body>
-    <!-- ✅ Navbar (same as home.html) -->
+    <!-- ✅ Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
             <a class="navbar-brand fw-bold text-primary" href="/">
@@ -106,15 +135,16 @@
 
     <!-- ✅ Main Monitor Section -->
     <div class="container monitor-container">
-        <h2 class="fw-bold mb-4 text-center text-primary"><i class="fas fa-chart-line me-2"></i> Health Monitor</h2>
-        <p class="text-center text-muted mb-5">Real-time tracking of your vital signs. Data refreshes every 30 seconds.</p>
+        <h2 class="fw-bold mb-3 text-center text-primary"><i class="fas fa-chart-line me-2"></i> Health Monitor</h2>
+        <p class="text-center text-muted mb-1">Real-time tracking of your vital signs.</p>
+        <p class="text-center" id="refreshTimer">Refreshing in <span id="timer">60</span> seconds...</p>
 
-        <div class="row g-4">
+        <div class="row g-4 mt-4">
             <!-- Heart Rate -->
             <div class="col-md-6">
                 <div class="monitor-card text-center">
                     <h5 class="mb-3"><i class="fas fa-heartbeat text-danger me-2"></i> Heart Rate</h5>
-                    <div id="heartRateValue" class="vital-value">-- BPM</div>
+                    <div id="heartRateValue" class="vital-value glow">-- BPM</div>
                     <div class="chart-container mt-4">
                         <canvas id="heartRateChart"></canvas>
                     </div>
@@ -125,7 +155,7 @@
             <div class="col-md-6">
                 <div class="monitor-card text-center">
                     <h5 class="mb-3"><i class="fas fa-lungs text-info me-2"></i> Blood Oxygen</h5>
-                    <div id="spo2Value" class="vital-value">-- %</div>
+                    <div id="spo2Value" class="vital-value glow">-- %</div>
                     <div class="chart-container mt-4">
                         <canvas id="spo2Chart"></canvas>
                     </div>
@@ -134,7 +164,9 @@
         </div>
 
         <div class="text-center mt-5">
-            <p class="iot-status" id="iotStatus"><span class="iot-disconnected">IoT not connected.</span></p>
+            <p class="iot-status" id="iotStatus">
+                <span class="status-dot bg-danger"></span><span class="iot-disconnected">IoT not connected.</span>
+            </p>
             <p class="text-muted" id="lastUpdated">Last update: --</p>
         </div>
     </div>
@@ -150,55 +182,40 @@
         const heartRateCtx = document.getElementById('heartRateChart').getContext('2d');
         const spo2Ctx = document.getElementById('spo2Chart').getContext('2d');
 
-        const heartRateData = {
-            labels: [],
-            datasets: [{
-                label: 'Heart Rate (BPM)',
-                data: [],
-                borderColor: '#4A90E2',
-                backgroundColor: 'rgba(74,144,226,0.1)',
-                tension: 0.4
-            }]
-        };
+        // Gradient fill
+        const hrGradient = heartRateCtx.createLinearGradient(0, 0, 0, 200);
+        hrGradient.addColorStop(0, 'rgba(74,144,226,0.4)');
+        hrGradient.addColorStop(1, 'rgba(74,144,226,0.05)');
 
-        const spo2Data = {
-            labels: [],
-            datasets: [{
-                label: 'Blood Oxygen (%)',
-                data: [],
-                borderColor: '#6C63FF',
-                backgroundColor: 'rgba(108,99,255,0.1)',
-                tension: 0.4
-            }]
-        };
+        const spo2Gradient = spo2Ctx.createLinearGradient(0, 0, 0, 200);
+        spo2Gradient.addColorStop(0, 'rgba(108,99,255,0.4)');
+        spo2Gradient.addColorStop(1, 'rgba(108,99,255,0.05)');
 
-        const heartRateChart = new Chart(heartRateCtx, {
-            type: 'line',
-            data: heartRateData,
-            options: { scales: { y: { beginAtZero: true, min: 40, max: 120 } } }
-        });
+        const heartRateData = { labels: [], datasets: [{ label: 'Heart Rate (BPM)', data: [], borderColor: '#4A90E2', backgroundColor: hrGradient, fill: true, tension: 0.4 }] };
+        const spo2Data = { labels: [], datasets: [{ label: 'Blood Oxygen (%)', data: [], borderColor: '#6C63FF', backgroundColor: spo2Gradient, fill: true, tension: 0.4 }] };
 
-        const spo2Chart = new Chart(spo2Ctx, {
-            type: 'line',
-            data: spo2Data,
-            options: { scales: { y: { beginAtZero: true, min: 80, max: 100 } } }
-        });
+        const heartRateChart = new Chart(heartRateCtx, { type: 'line', data: heartRateData, options: { scales: { y: { min: 40, max: 120 } } } });
+        const spo2Chart = new Chart(spo2Ctx, { type: 'line', data: spo2Data, options: { scales: { y: { min: 80, max: 100 } } } });
 
         async function fetchIoTData() {
             try {
                 const response = await fetch('/api/iot-data');
                 const data = await response.json();
 
+                const statusEl = document.getElementById('iotStatus');
+                const hrEl = document.getElementById('heartRateValue');
+                const spo2El = document.getElementById('spo2Value');
+
                 if (!data.connected) {
-                    document.getElementById('iotStatus').innerHTML = '<span class="iot-disconnected">IoT not connected.</span>';
-                    document.getElementById('heartRateValue').textContent = '-- BPM';
-                    document.getElementById('spo2Value').textContent = '-- %';
+                    statusEl.innerHTML = '<span class="status-dot bg-danger"></span><span class="iot-disconnected">IoT not connected.</span>';
+                    hrEl.textContent = '-- BPM';
+                    spo2El.textContent = '-- %';
                     return;
                 }
 
-                document.getElementById('iotStatus').innerHTML = '<span class="iot-connected">IoT connected ✓</span>';
-                document.getElementById('heartRateValue').textContent = data.heart_rate + ' BPM';
-                document.getElementById('spo2Value').textContent = data.spo2 + ' %';
+                statusEl.innerHTML = '<span class="status-dot bg-success"></span><span class="iot-connected">IoT connected ✓</span>';
+                hrEl.textContent = data.heart_rate + ' BPM';
+                spo2El.textContent = data.spo2 + ' %';
 
                 const timeLabel = new Date().toLocaleTimeString();
                 heartRateData.labels.push(timeLabel);
@@ -215,13 +232,23 @@
                 spo2Chart.update();
 
                 document.getElementById('lastUpdated').textContent = 'Last update: ' + new Date().toLocaleString();
-            } catch (error) {
-                document.getElementById('iotStatus').innerHTML = '<span class="iot-disconnected">IoT not connected.</span>';
+            } catch {
+                document.getElementById('iotStatus').innerHTML = '<span class="status-dot bg-danger"></span><span class="iot-disconnected">IoT not connected.</span>';
             }
         }
 
+        // Refresh every 60 seconds
+        let timer = 60;
+        function countdown() {
+            document.getElementById('timer').textContent = timer;
+            timer--;
+            if (timer < 0) {
+                timer = 60;
+                fetchIoTData();
+            }
+        }
+        setInterval(countdown, 1000);
         fetchIoTData();
-        setInterval(fetchIoTData, 30000); // every 30s
     </script>
 </body>
 </html>
